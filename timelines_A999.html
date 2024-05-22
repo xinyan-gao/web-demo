@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+
+<html lang="en" >
+	
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive Timeline with Map</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
+  <link href='https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css' rel='stylesheet' />
+
+<style>
+body {
+  margin: 0;
+  font-family: "Open Sans", sans-serif
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+.timelines {
+  width: 50%;
+  background-color: #fff; /* White background for the timeline section */
+}
+
+.map {
+  margin-top: 50px;
+  width: 50%;
+  height: 80vh; /* Full height for the map */
+}
+
+.body-wrap {
+  background-color: #fff;
+  width: 600px;
+  min-height: 500px;
+  margin: 0 auto;
+  font-size: 12px;
+}
+
+.pres-timeline {
+  font-family: roboto, helvetica, sans-serif;
+  font-size: 12px;
+  color: #4A4A4A;
+  width: 100%;
+  margin: 30px 0;
+}
+
+.pres-timeline > div > div {
+  padding: 1em 0;
+  box-sizing: border-box;
+}
+
+.pres-timeline .periods-container, .pres-timeline .cards-container {
+  overflow: hidden;
+  box-sizing: border-box;
+  position: relative;
+  min-height: 100px;
+  transition: height 0.5s ease-in-out;
+  background-color: #FFF;
+}
+
+.periods-container:before {
+  background-image: linear-gradient(left, #FFF, rgba(248, 248, 248, 0));
+  left: 0;
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  height: 100%;
+  width: 100px;
+}
+
+.periods-container:after {
+  background-image: linear-gradient(right, #FFF, rgba(248, 248, 248, 0));
+  right: 0;
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  height: 100%;
+  width: 100px;
+}
+
+.periods-container .btn-back, .periods-container .btn-next {
+  display: inline-block;
+  width: 15%;
+  height: 100%;
+  position: absolute;
+  cursor: pointer;
+  z-index: 10;
+  transition: 0.3s ease-in-out;
+}
+
+.periods-container .btn-back:hover, .periods-container .btn-next:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.periods-container .btn-back.hide, .periods-container .btn-next.hide {
+  display: none;
+}
+
+.periods-container .btn-back {
+  left: 0;
+}
+
+.periods-container .btn-next {
+  right: 0;
+}
+
+.periods-container section {
+  width: 70%;
+  height: 0;
+  position: absolute;
+  margin-left: 15%;
+  border-bottom: 5px solid #dfe3e6;
+  padding: 1.5em;
+  box-sizing: border-box;
+  transition: transform 0.3s ease-in-out, opacity 0.2s ease, height 0.3s ease;
+  bottom: 0;
+  opacity: 0;
+  background-color: #fff;
+}
+
+.periods-container section.active {
+  height: auto;
+  opacity: 1;
+  transform: translateX(0);
+  z-index: 5;
+}
+
+.periods-container section.active .title, .periods-container section.active p {
+  display: block;
+}
+
+.periods-container section.prev {
+  height: auto;
+  opacity: 0.4;
+  transform: translateX(-100%);
+  z-index: 0;
+}
+
+.periods-container section.prev .year {
+  text-align: right;
+}
+
+.periods-container section.next {
+  height: auto;
+  opacity: 0.4;
+  transform: translateX(100%);
+  z-index: 0;
+}
+
+.periods-container section .year {
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.periods-container section .title {
+  color: #4A4A4A;
+  font-size: 28px;
+  font-weight: 400;
+  display: none;
+}
+
+.periods-container section p {
+  display: none;
+}
+
+.timeline-container {
+  position: relative;
+  width: 100%;
+  height: 50px;
+  overflow: hidden;
+}
+
+.timeline-container:before {
+  background-image: linear-gradient(left, #FFF, rgba(248, 248, 248, 0));
+  left: 0;
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  height: 100%;
+  width: 100px;
+}
+
+.timeline-container:after {
+  background-image: linear-gradient(right, #FFF, rgba(248, 248, 248, 0));
+  right: 0;
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  height: 100%;
+  width: 100px;
+}
+
+.timeline-container .timeline {
+  position: absolute;
+  display: block;
+  height: 50px;
+  transition: left 0.3s ease-in-out;
+}
+
+.timeline-container .timeline ol {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background-color: #dfe3e6;
+  list-style: none;
+  padding-left: 210px;
+  padding-right: 300px;
+}
+
+.timeline-container .timeline ol li {
+  display: inline-block;
+  padding: 5px;
+  margin-top: -11px;
+  margin-left: 80px;
+  border-radius: 50%;
+  border: 3px solid #7f9298;
+  background-color: #FFF;
+  position: relative;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.timeline-container .timeline ol li.active {
+  box-shadow: none;
+}
+
+.timeline-container .timeline ol li.active:before {
+  content: "";
+  display: block;
+  height: 25px;
+  width: 1px;
+  position: absolute;
+  top: -25px;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.timeline-container .timeline ol li.active:after {
+  content: "";
+  display: block;
+  height: 25px;
+  width: 1px;
+  position: absolute;
+  bottom: -25px;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.timeline-container .btn-back, .timeline-container .btn-next {
+  display: inline-block;
+  position: absolute;
+  cursor: pointer;
+  margin-top: -2px;
+  z-index: 11;
+  transition: all 0.3s ease;
+}
+
+.timeline-container .btn-back.hide, .timeline-container .btn-next.hide {
+  display: none;
+}
+
+.timeline-container .btn-back:hover, .timeline-container .btn-next:hover {
+  border-color: #7f9298;
+}
+
+.timeline-container .btn-back {
+  left: 1em;
+}
+
+.timeline-container .btn-next {
+  right: 1em;
+}
+
+.cards-container:before {
+  background-image: linear-gradient(left, #FFF, rgba(248, 248, 248, 0));
+  left: 0;
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  height: 100%;
+  width: 100px;
+}
+
+.cards-container:after {
+  background-image: linear-gradient(right, #FFF, rgba(248, 248, 248, 0));
+  right: 0;
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  height: 100%;
+  width: 100px;
+}
+
+.cards-container section {
+  width: 70%;
+  position: absolute;
+  margin-left: 15%;
+  margin-bottom: 2em;
+  border: 1px solid #f5f7f6;
+  padding: 1.5em;
+  box-sizing: border-box;
+  transition: transform 0.3s ease-in-out;
+  top: 0;
+  opacity: 0;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15);
+}
+
+.cards-container section.active {
+  height: auto;
+  opacity: 1;
+  transform: translateX(0);
+  z-index: 5;
+}
+
+.cards-container section.prev {
+  height: auto;
+  opacity: 0.4;
+  transform: translateX(-105%);
+  z-index: 0;
+}
+
+.cards-container section.next {
+  height: auto;
+  opacity: 0.4;
+  transform: translateX(105%);
+  z-index: 0;
+}
+
+.cards-container section .year {
+  text-align: center;
+  font-size: 16px;
+  margin: 0;
+}
+
+.cards-container section .title {
+  font-weight: 400;
+}
+
+.cards-container section img {
+  width: 100%;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.legend-color {
+  width: 30px;
+  height: 13px;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.legend-color1 {
+  width: 30px;
+  height: 5px;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.legend-text {
+  font-size: 14px;
+}
+
+.mapboxgl-popup-content {
+    background-color: rgba(0, 0, 0, 0.78) !important; /* black background，50% transparency */
+    color: white !important; /* white text */
+}
+
+.mapboxgl-popup-tip {
+    border-top-color: rgba(0, 0, 0, 0.78) !important;
+}
+	</style>
+
+</head>
+
+	
+	
+<body>
+
+<div class="container">
+  <div class="timelines">	
+<!-- partial:index.partial.html -->
+<div class="body-wrap">
+<!-- # component starts -->
+  <div class="pres-timeline" id="this-timeline">
+<!-- ###   -->
+<!--   <div class="periods-section"> -->
+    <div class="periods-container">
+      <section class="period-single" period="period1">
+        <h2 class="title" style="font-weight: bold; font-size: 30px;">Overall</h2>
+         <h4 class="year">From the past to the future</h4>
+        <p>Singapore Changi Airport, the Mass Rapid Transit (MRT) and the Light Rail Transit (LRT) systems are the core components of the country's transport infrastructure and play a vital role in driving regional economic development and international exchanges. They are key infrastructure for Singapore to sustain its future market competitiveness. These transport networks enhance economic activity and improve the quality of life for residents by improving urban connectivity and accessibility. Continuous technological upgrades and network expansion ensure Singapore's attractiveness and competitiveness as a global city-state.</p>
+      </section>
+		<section class="period-single" period="period2">
+         <h2 class="title" style="font-weight: bold; font-size: 30px;">Singapore Changi Airport</h2>
+          <h4 class="year">1976 - the mid-2030s</h4>
+        <p>Airports are crucial hubs linking regions worldwide for commerce, culture, and travel, fostering international ties and local economies. Singapore Changi Airport's development spans various phases, shaping both its history and future.<br><br>Source: <a href="https://www.changiairport.com/corporate/about-us/our-story.html">Changi Airport</a></p>
+      </section>
+      <section class="period-single" period="period3">
+         <h2 class="title" style="font-weight: bold; font-size: 30px;">The MRT System</h2>
+        <h4 class="year">1987-2040</h4>
+        <p>The urban public transportation system, particularly Singapore's MRT (Mass Rapid Transit), plays a vital role in enhancing traffic flow and air quality. It offers fast, dependable, and affordable mass transit, linking residential, commercial, and transportation hubs. With multiple lines covering extensive areas, the MRT efficiently handles high passenger volumes. Its underground and elevated routes minimize disruption to urban traffic, boosting operational efficiency.<br><br>Source: <a href="https://www.lta.gov.sg/content/ltagov/en/who_we_are/our_organisation/the_lta_story.html">Land Transport Authority</a></p>
+      </section>
+      <section class="period-single" period="period4">
+        <h2 class="title" style="font-weight: bold; font-size: 30px;">The LRT System</h2>
+        <h4 class="year">From 1999 to future</h4>
+        <p>Singapore's LRT (Light Rail Transit) system, found in areas like Bukit Panjang, Sengkang, and Punggol, complements the MRT by connecting residential zones to main stations. Operating mostly on the surface, sometimes alongside roads, these routes are flexible for short community trips.<br><br>Source: <a href="https://www.lta.gov.sg/content/ltagov/en/who_we_are/our_organisation/the_lta_story.html">Land Transport Authority</a></p>
+      </section>
+      <div class="btn-back"></div>
+      <div class="btn-next"></div>
+    </div>
+<!--   </div> -->
+<!-- ### -->
+<!--   <div class="timeline-section"> -->
+    <div class="timeline-container">
+      <!--     # timeline graphic place holder - fill with js -->
+      <div class="timeline"></div>
+  
+      <div class="btn-back"><svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><path fill="none" d="M0 0h30v30H0z"/><path fill="#D8D8D8" fill-rule="evenodd" d="M11.828 15l7.89-7.89-2.83-2.828L6.283 14.89l.11.11-.11.11L16.89 25.72l2.828-2.83"/></svg></div>
+      <div class="btn-next"><svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><path fill="none" d="M0 0h30v30H0z"/><path fill="#D8D8D8" fill-rule="evenodd" d="M18.172 14.718l-7.89-7.89L13.112 4l10.606 10.607-.11.11.11.11-10.608 10.61-2.828-2.83 7.89-7.89"/></svg></div>
+    </div>
+<!--   </div> -->
+<!-- ### -->
+<!--   <div class="cards-section"> -->
+    <div class="cards-container">
+<section class="card-single" period="period1">
+  <h4 class="year">Present</h4>
+	<h3 class="title"><strong>Overlay map of Changi Airport, MRT and LRT systems</strong><br>(Hover over the feature for details and press 'Ctrl' to zoom)</h3>
+  <div class="content">
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-text"><strong>Legend</strong></span>
+      </div>
+	  <div class="legend-item">
+        <span class="legend-color" style="background-color: #f08; opacity: 0.5;"></span>
+        <span class="legend-text">Changi Airport</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color1" style="background-color: #F99D26;"></span>
+        <span class="legend-text">Circle Line</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color1" style="background-color: #005EA8;"></span>
+        <span class="legend-text">Downtown Line</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color1" style="background-color: #00964C;"></span>
+        <span class="legend-text">East West Line</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color1" style="background-color: #8F4199;"></span>
+        <span class="legend-text">North East Line</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color1" style="background-color: #E22726;"></span>
+        <span class="legend-text">North South Line</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color1" style="background-color: #9D5B26;"></span>
+        <span class="legend-text">Thomson-East Coast Line</span>
+      </div>
+
+      <div class="legend-item">
+        <span class="legend-color1" style="background-color: #728472; opacity: 1;"></span>
+        <span class="legend-text">Bukit Panjang LRT</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color1" style="background-color: #728472; opacity: 0;"></span>
+        <span class="legend-text">Punggol LRT (East Loop)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color1" style="background-color: #728472; opacity: 0;"></span>
+        <span class="legend-text">Punggol LRT (West Loop)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color1" style="background-color: #728472; opacity: 0;"></span>
+        <span class="legend-text">Sengkang LRT (East Loop)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color1" style="background-color: #728472; opacity: 0;"></span>
+        <span class="legend-text">Sengkang LRT (West Loop)</span>
+      </div>
+    </div>
+  </div>
+</section>
+		<section class="card-single active" period="period2">
+        <h4 class="year">1976 - 1981</h4>
+        <h2 class="title">Initial stage:</h2>
+        <div class="content">
+          <img src="https://www.changiairport.com/content/dam/cacorp/about-us/our-story/378x210-A_History_of_Firsts_1979.jpg" alt="" />
+          <p>In 1976, reclamation and land preparation work on the Changi Airport site began. In 1979, the foundation stone for Changi Airport's first terminal building (Terminal 1) was laid. In 1981, Changi Airport officially began operations.</p>
+        </div>
+      </section>
+		
+      <section class="card-single active" period="period2">
+        <h4 class="year">1986 - 2019</h4>
+        <h2 class="title">Implemented continuous expansion and upgrade phase:</h2>
+        <div class="content">
+          <img src="https://www.changiairport.com/content/dam/cacorp/about-us/our-story/378x210-A_History_Of_Firsts_2019.jpg" alt="" />
+          <p>1986: Construction of Terminal 2 began.<br>2006: Opening of the Budget Terminal, dedicated to budget aviation, and introduction of Asia's first luxury airport terminal facility.<br>2008: Terminal 3 opened.<br>2012: Terminal 1 was refurbished to introduce the Kinetic Rain art installation.<br>2017: Terminal 4 opened.<br>2019: Opening of Jewel Changi Airport, a mixed-use complex with retail, dining and entertainment facilities.</p>
+        </div>
+      </section>
+
+      <section class="card-single" period="period2">
+        <h4 class="year">Future by the mid-30s of the 21st century</h4>
+        <h2 class="title">Future planning and technological upgrading phase:</h2>
+        <div class="content">
+          <img src="https://www.changiairport.com/content/dam/cacorp/about-us/our-story/a-bright-future/666x444-future_of_changi.jpg" alt="" />
+          <p>Construction of T5 is expected to begin in 2025.T5 would incorporate a number of sustainable building and operational measures, for example, the use of solar panels, intelligent building management systems, district cooling systems, and so on, to ensure environmental sustainability. The design of Terminal 5 accommodates future traffic growth, with an annual capacity of approximately 50 million passengers. Operations at the terminal are anticipated to begin in the mid-2030s.</p>
+        </div>
+      </section>
+		
+
+      <section class="card-single" period="period3">
+        <h4 class="year">1987</h4>
+        <h2 class="title">Beginning:</h2>
+        <div class="content">
+          <img src="https://www.lta.gov.sg/content/ltagov/en/who_we_are/our_organisation/the_lta_story/_jcr_content/par/tab_yellow_new_437639921/tab-content-tab_yellow_new_437639921/image.img.png/1591327025810.png" alt="" />
+		  <p>The North-South Line, which is Singapore's first MRT line, has been operating, initially connecting five stations from Yio Chu Kang to Toa Payoh.</p>
+        </div>
+      </section>
+
+      <section class="card-single" period="period3">
+        <h4 class="year">For the next a few years to the present</h4>
+        <h2 class="title">Expansion:</h2>
+        <div class="content">
+		  <p>In subsequent years, the network was gradually expanded with the addition of the East-West Line, the Circle Line, the North East Line, the Downtown Line, and the Thomson-East Coast Line.</p>
+        </div>
+      </section>
+
+      <section class="card-single" period="period3">
+        <h4 class="year">The future by 2040</h4>
+        <h2 class="title">Future developments:</h2>
+        <div class="content">
+          <p>The total network length would be expected to increase from the current 230 kilometers to about 450 kilometers by 2040. New lines coming into service include the Jurong Region Line and the Cross Island Line, which will be scheduled to open by phases from 2027 and 2030, respectively.</p>
+        </div>
+      </section>
+
+      <section class="card-single" period="period4">
+        <h4 class="year">From 1999 to the present</h4>
+        <h2 class="title">The beginning and development:</h2>
+        <div class="content">
+          <img src="https://www.lta.gov.sg/content/ltagov/en/getting_around/public_transport/rail_network/bukit_panjang_lrt/_jcr_content/par/textimage/image.img.jpg/1567021815675.jpg" alt="" />
+          <p>1999: Singapore's first LRT line, the Bukit Panjang LRT (BPLRT), opened. This was Singapore's first attempt to provide convenient transit within residential areas.<br>2003: Sengkang LRT (SKLRT) opened. The route was designed to serve the rapidly developing Sengkang Newtown.<br>2005: The first phase of Punggol LRT (PGLRT) opened. Subsequently, as Punggol Newtown expanded, the LRT system was expanded accordingly.<br>2015 and afterwards: A series of upgrades and maintenance work has been carried out, particularly on the aging Bukit Panjang line, including upgrading the system and vehicles to improve reliability and efficiency.</p>
+        </div>
+      </section>
+
+      <section class="card-single" period="period4">
+        <h4 class="year">Future</h4>
+        <h2 class="title">Future developments:</h2>
+        <div class="content">
+          <p>Future Planning: Under the Land Transport Authority's (LTA) long-term plan, the LRT system will continue to expand to accommodate the growth of emerging residential areas in northern and northeastern Singapore. This includes the possible construction of new lines or extension of existing lines.<br>Technology upgrades: More advanced train management and signaling systems are expected to be introduced to improve service frequency and reliability. Meanwhile, modernization of stations and vehicles to enhance passenger experience will also be part of future developments.</p>
+        </div>
+      </section>
+
+    </div>
+<!--   </div> -->
+<!-- ###   -->
+  </div>
+<!-- # component ends -->
+</div>
+<!-- partial -->
+  </div>
+  <div class="map" id="map"></div>
+</div>
+
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+<script>
+"use strict";
+class PRESTimeline {
+    constructor(target, color) {
+        this.base = target;
+        this.color = color;
+        this.periodContainer = $(this.base).find('.periods-container');
+        this.cardContainer = $(this.base).find('.cards-container');
+        this.timelineNodeContainer = $(this.base).find('.timeline-container .timeline');
+        this._parseData();
+        this._initialColor();
+        this._generateTimeline();
+        this._setStateClasses();
+        this._assignBtn();
+        this._adjustPeriodContainer();
+        this._adjustCardContainer();
+        this.updateMapLayerVisibility(); // Initial update of the map view
+    }
+
+    updateMapLayerVisibility() {
+        let activePeriod = $(this.base).find('.periods-container section.active').attr('period');
+        switch (activePeriod) {
+            case 'period1':
+                map.setLayoutProperty('changi', 'visibility', 'visible');
+                map.setLayoutProperty('MRT', 'visibility', 'visible');
+                map.setLayoutProperty('LRT', 'visibility', 'visible');
+                map.flyTo({ center: [103.8198, 1.3521], zoom: 9.91 });
+                break;
+			case 'period2':
+                map.setLayoutProperty('changi', 'visibility', 'visible');
+                map.setLayoutProperty('MRT', 'visibility', 'none');
+                map.setLayoutProperty('LRT', 'visibility', 'none');
+                map.flyTo({ center: [103.99, 1.3521], zoom: 11.91 });
+                break;
+            case 'period3':
+                map.setLayoutProperty('changi', 'visibility', 'none');
+                map.setLayoutProperty('MRT', 'visibility', 'visible');
+                map.setLayoutProperty('LRT', 'visibility', 'none');
+                map.flyTo({ center: [103.8198, 1.3521], zoom: 9.91 });
+                break;
+            case 'period4':
+                map.setLayoutProperty('changi', 'visibility', 'none');
+                map.setLayoutProperty('MRT', 'visibility', 'none');
+                map.setLayoutProperty('LRT', 'visibility', 'visible');
+                map.flyTo({ center: [103.8198, 1.3521], zoom: 9.91 });
+                break;
+        }
+    }
+	
+	
+	
+	
+	
+	
+
+    _parseData() {
+        let base = this.base;
+        let periods = $(base).find('.periods-container section');
+        for (let section of periods) {
+            section.period = $(section).attr('period');
+            section.index = $(section).index();
+        }
+        this.periodData = periods;
+        let data = $(base).find('.cards-container section');
+        for (let section of data) {
+            section.period = $(section).attr('period');
+            section.index = $(section).index();
+        }
+        this.cardData = data;
+        this.activePeriod = this.periodData[0];
+        this.activePeriodIndex = 0;
+        this.activeCard = this.cardData[0];
+        this.activeCardIndex = 0;
+    }
+
+    _setStateClasses() {
+        $(this.base).find('.periods-container section.active').removeClass('active');
+        $(this.base).find('.periods-container section.prev').removeClass('prev');
+        $(this.base).find('.periods-container section.next').removeClass('next');
+        $(this.activePeriod).addClass('active');
+        if ($(this.activePeriod).prev().length != 0) {
+            $(this.activePeriod).prev().addClass('prev');
+            $(this.base).find('.periods-container .btn-back').removeClass('hide');
+        } else {
+            $(this.base).find('.periods-container .btn-back').addClass('hide');
+        }
+        if ($(this.activePeriod).next().length != 0) {
+            $(this.activePeriod).next().addClass('next');
+            $(this.base).find('.periods-container .btn-next').removeClass('hide');
+        } else {
+            $(this.base).find('.periods-container .btn-next').addClass('hide');
+        }
+        $(this.base).find('.cards-container section.active').removeClass('active');
+        $(this.base).find('.cards-container section.prev').removeClass('prev');
+        $(this.base).find('.cards-container section.next').removeClass('next');
+        $(this.activeCard).addClass('active');
+        if ($(this.activeCard).prev().length != 0) {
+            $(this.activeCard).prev().addClass('prev');
+        }
+        if ($(this.activeCard).next().length != 0) {
+            $(this.activeCard).next().addClass('next');
+        }
+        $(this.base).find('.timeline li.active').removeClass('active');
+        $(this.timelineData[this.activeCard.index]).addClass('active');
+        let timelineB = $(this.base).find('.timeline-container .btn-back');
+        let timelineN = $(this.base).find('.timeline-container .btn-next');
+        if (this.activeCardIndex === 0) {
+            timelineB.addClass('hide');
+        } else {
+            timelineB.removeClass('hide');
+        }
+        if (this.activeCardIndex >= this.cardData.length - 1) {
+            timelineN.addClass('hide');
+        } else {
+            timelineN.removeClass('hide');
+        }
+		this.updateMapLayerVisibility(); // Updating the map view while in the setup state
+    }
+
+    _generateTimeline() {
+        let htmlWrap = '<ol></ol>';
+        $(this.timelineNodeContainer).append(htmlWrap);
+        let wrap = $(this.timelineNodeContainer).find('ol');
+        let numNode = this.cardData.length;
+        for (let i = 0; i < numNode; i++) {
+            let c = this.cardData[i].color;
+            wrap.append('<li class="' + this.cardData[i].period + '" style="border-color: ' + c + '"></li>');
+        }
+        let nodeW = 200;
+        wrap.css('width', nodeW * numNode - 16);
+        let nodeList = $(this.base).find('.timeline ol li');
+        this.timelineData = nodeList;
+    }
+
+    _assignBtn() {
+        let periodPrev = $(this.base).find('.periods-container .btn-back');
+        let periodNext = $(this.base).find('.periods-container .btn-next');
+        periodPrev.click(() => {
+            if (this.activePeriodIndex > 0) {
+                this.activePeriodIndex -= 1;
+                this.activePeriod = this.periodData[this.activePeriodIndex];
+                this._chainActions('period');
+                this._setStateClasses();
+                this._adjustPeriodContainer();
+            }
+        });
+        periodNext.click(() => {
+            if (this.activePeriodIndex < this.periodData.length - 1) {
+                this.activePeriodIndex += 1;
+                this.activePeriod = this.periodData[this.activePeriodIndex];
+                this._chainActions('period');
+                this._setStateClasses();
+
+				this._adjustPeriodContainer();
+            }
+        });
+        let timelinePrev = $(this.base).find('.timeline-container .btn-back');
+        let timelineNext = $(this.base).find('.timeline-container .btn-next');
+        timelinePrev.click(() => {
+            if (this.activeCardIndex > 0) {
+                this.activeCardIndex -= 1;
+                this.activeCard = this.cardData[this.activeCardIndex];
+                this._chainActions('timeline');
+                this._setStateClasses();
+                this._adjustCardContainer();
+                this._adjustPeriodContainer();
+            }
+        });
+        timelineNext.click(() => {
+            if (this.activeCardIndex < this.cardData.length - 1) {
+                this.activeCardIndex += 1;
+                this.activeCard = this.cardData[this.activeCardIndex];
+                this._chainActions('timeline');
+                this._setStateClasses();
+                this._adjustCardContainer();
+                this._adjustPeriodContainer();
+            }
+        });
+$(this.timelineData).click((event) => {
+    let index = $(event.target).index();
+    this.activeCardIndex = index;
+    this.activeCard = this.cardData[index];
+    this._chainActions('timeline');
+    this._setStateClasses();
+    this._adjustCardContainer();
+    this._shiftTimeline();
+});
+
+    }
+
+
+
+    _initialColor() {
+        for (let i = 0; i < this.periodData.length; i++) {
+            let p = this.periodData[i].period;
+            this.periodData[i].color = this.color[p];
+            let temp = this.periodData[i];
+            $(temp).css('border-color', temp.color);
+            $(temp).find('.year').css('color', temp.color);
+            let sbstyle = document.createElement("style");
+            document.head.appendChild(sbstyle);
+            sbstyle.sheet.insertRule('li.' + p + '.active { background-color: ' + this.color[p] + ' !important } ', 0);
+            sbstyle.sheet.insertRule('li.' + p + '::before { background-color: ' + this.color[p] + ' } ', 0);
+            sbstyle.sheet.insertRule('li.' + p + '::after { background-color: ' + this.color[p] + ' } ', 0);
+        }
+        for (let i = 0; i < this.cardData.length; i++) {
+            let p = this.cardData[i].period;
+            this.cardData[i].color = this.color[p];
+            let temp = this.cardData[i];
+            $(temp).css('border-color', temp.color);
+            $(temp).find('.year').css('color', temp.color);
+        }
+    }
+
+    _adjustPeriodContainer() {
+        let activeH = $(this.activePeriod).outerHeight();
+        $(this.periodContainer).height(activeH);
+    }
+
+    _adjustCardContainer() {
+        let activeH = $(this.activeCard).outerHeight() + 24;
+        $(this.cardContainer).height(activeH);
+    }
+
+    _shiftTimeline() {
+        let timelineW = $(this.base).find('.timeline-container').outerWidth();
+        let timelinePadding = 210;
+        let timelineCenter = 300;
+        let liWidth = 16;
+        let activeNodeX = $(this.timelineData[this.activeCardIndex]).position().left;
+        let finalPos = -activeNodeX + timelinePadding;
+        $(this.timelineNodeContainer).css('left', finalPos);
+    }
+
+    _chainActions(state) {
+        if (state === 'period') {
+            if (this.activePeriod.period != this.activeCard.period) {
+                let ta = [];
+                for (let i = 0; i < this.cardData.length; i++) {
+                    let temp = this.cardData[i];
+                    if (this.activePeriod.period === temp.period) ta.push(temp);
+                }
+                this.activeCard = ta[0];
+                this.activeCardIndex = ta[0].index;
+            }
+        } else if (state === 'timeline') {
+            if (this.activeCard.period != this.activePeriod.period) {
+                let ta;
+                for (let i = 0; i < this.periodData.length; i++) {
+                    let temp = this.periodData[i];
+                    if (this.activeCard.period === temp.period) ta = temp;
+                }
+                this.activePeriod = ta;
+                this.activePeriodIndex = ta.index;
+            }
+        }
+        this._shiftTimeline();
+        this._adjustCardContainer();
+    }
+}
+
+  // Initialize Mapbox map
+  mapboxgl.accessToken = 'pk.eyJ1IjoiaWFkYWFjYTkxNDExMyIsImEiOiJjbHRicWdsajAwNWNjMmxudHlsZ2hvbHlyIn0.1CUoJeD-i73AfzIevYu7WA';
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/iadaaca914113/clw1vf7mj02eb01qrazon0j9e',
+    center: [103.8198, 1.3521], // Singapore Longitude, Latitude
+    zoom: 9.91
+});
+
+let popup; // Declare popup variable at the top of the script to ensure it's in the global scope
+
+map.on('load', function() {
+    
+	map.dragRotate.disable();
+            
+             map.easeTo({
+        bearing: 0, // Set the map rotation angle to 0 to ensure that the map is in 2D mode
+        duration: 0 // It can be set to 0 to apply changes immediately
+    });
+            
+            // Disable scroll zoom for maps
+            map.scrollZoom.disable();
+
+            // Listen for keyboard press events
+            document.addEventListener('keydown', (event) => {
+                // If the Ctrl key is pressed, scrolling zoom of the map is activated
+                if (event.ctrlKey) {
+                    map.scrollZoom.enable();
+                }
+            });
+
+            // Listen for keyboard lift events
+            document.addEventListener('keyup', () => {
+                // Disable scroll zoom for maps when keyboard is raised
+                map.scrollZoom.disable();
+            });
+	
+	// Add the first layer: polygons
+    map.addSource('airport', {
+        type: 'vector',
+        url: 'mapbox://iadaaca914113.b3ml7ka5'
+    });
+
+    map.addLayer({
+        id: 'changi',
+        type: 'fill',
+        source: 'airport',
+        'source-layer': 'changji-8sqi92',  // Replace with your source-layer name
+        paint: {
+            'fill-color': '#e84545',  // Choose your favorite color
+            'fill-opacity': 0.5
+        }
+    });
+
+    // Add MRT layer
+    map.addLayer({
+        id: 'MRT',
+        type: 'line',
+        source: {
+            type: 'vector',
+            url: 'mapbox://iadaaca914113.8yo2yzrf'
+        },
+        'source-layer': 'sg-rail-1bhc8x',
+        filter: ['==', ['get', 'network'], 'singapore-mrt'],
+        paint: {
+            'line-color': ['match', ['get', 'name'],
+                'Circle Line', '#F99D26',
+                'Downtown Line', '#005EA8',
+                'East West Line', '#00964C',
+                'North East Line', '#8F4199',
+                'North South Line', '#E22726',
+                'Thomson-East Coast Line', '#9D5B26',
+                '#ffcc00'  // Default color
+            ],
+            'line-width': 3
+        },
+		layout: {
+            'visibility': 'none'  // Initially set MRT to be invisible
+        }
+    });
+
+    // Add LRT layer
+    map.addLayer({
+        id: 'LRT',
+        type: 'line',
+        source: {
+            type: 'vector',
+            url: 'mapbox://iadaaca914113.8yo2yzrf'
+        },
+        'source-layer': 'sg-rail-1bhc8x',
+        filter: ['==', ['get', 'network'], 'singapore-lrt'],
+        paint: {
+            'line-color': ['match', ['get', 'name'],
+                'Bukit Panjang LRT', '#728472',
+                'Punggol LRT (East Loop)', '#728472',
+                'Punggol LRT (West Loop)', '#728472',
+                'Sengkang LRT (East Loop)', '#728472',
+                'Sengkang LRT (West Loop)', '#728472',
+                '#ff66ff'  // Default color
+            ],
+            'line-width': 3
+        },
+		layout: {'visibility': 'none'  // Initially set LRT to be invisible
+        }
+    });
+
+    // Add Popup feature for MRT and LRT layers
+    ['changi'].forEach(function(layerId) {
+        map.on('mouseenter', layerId, function(e) {
+            // Check if there's already a popup and remove it if there is
+            if (popup) {
+                popup.remove();
+            }
+            // Create and show new popup
+            popup = new mapboxgl.Popup({ closeOnClick: true, closeButton: false })
+                .setLngLat(e.lngLat)
+                .setHTML('Changi Airport')
+                .addTo(map);
+            map.getCanvas().style.cursor = 'pointer';
+        });
+
+        map.on('mouseleave', layerId, function() {
+            // Remove popup when mouse leaves
+            if (popup) {
+                popup.remove();
+                popup = null; // Clear the reference to the popup
+            }
+            map.getCanvas().style.cursor = '';
+        });
+    });
+
+    // Add Popup feature for MRT and LRT layers
+    ['MRT', 'LRT'].forEach(function(layerId) {
+        map.on('mouseenter', layerId, function(e) {
+            // Check if there's already a popup and remove it if there is
+            if (popup) {
+                popup.remove();
+            }
+            // Create and show new popup
+            popup = new mapboxgl.Popup({ closeOnClick: true, closeButton: false })
+                .setLngLat(e.lngLat)
+                .setHTML(e.features[0].properties.name)
+                .addTo(map);
+            map.getCanvas().style.cursor = 'pointer';
+        });
+
+        map.on('mouseleave', layerId, function() {
+            // Remove popup when mouse leaves
+            if (popup) {
+                popup.remove();
+                popup = null; // Clear the reference to the popup
+            }
+            map.getCanvas().style.cursor = '';
+        });
+    });
+	
+// Ensure that all page content is fully loaded before initialising the timeline
+$(document).ready(function() {
+    let colorcode = {
+        'period1': '#e84545',
+        'period2': '#fec541',
+		'period3': '#36d484',
+        'period4': '#32ccf4'
+    };
+    let timeline = new PRESTimeline($('#this-timeline'), colorcode);
+});
+
+});
+
+</script>
+</body>
+</html>

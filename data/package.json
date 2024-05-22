@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@antv/l7": "^2.x",
+    "@antv/l7-composite-layers": "latest",
+    "@antv/l7plot": "latest"
+  },
+  "devDependencies": {
+    "typescript": "latest"
+  },
+  "main": "index.ts"
+}

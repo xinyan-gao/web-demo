@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8' />
+  <title>From 1992 to 2020 nighttime lights in Singapore</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    #slider-container { position: absolute; top: 10px; left: 10px; }
+    #slider { width: 200px; }
+    #year-display { position: absolute; top: 10px; right: 10px; background-color: transparent; color: white; font-size: 31px; padding: 5px; }
+    #animate-btn { margin-left: 20px; }
+#legend {
+  position: absolute;
+  bottom: 40px;
+  right: 20px;
+  background: white;
+  padding: 10px;
+  z-index: 999;
+  border: 1px solid #ccc; /* Optional: adds border around the legend */
+}
+
+#legend-scale {
+  width: 180px;
+  height: 20px;
+  background: linear-gradient(to right, #001A3E, #FFE500);
+}
+
+#legend div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+  </style>
+</head>
+<body>
+<div id='map'></div>
+<div id="slider-container">
+  <button id="animate-btn">Play the animation</button>
+  <input id="slider" type="range" min="1992" max="2020" step="2" value="1992" oninput="updateYear(this.value)">
+</div>
+<div id="year-display">1992</div>
+<div id="legend" style="position: absolute; bottom: 31px; right: 10px; background: white; padding: 10px; z-index: 999; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+	<div style="text-align: center; font-size: 15px; margin-bottom: 10px;"><strong>Legend</strong></div>
+  <div style="width: 180px; height: 20px; background: linear-gradient(to right, blue, yellow);"></div>
+  <div style="display: flex; justify-content: space-between; font-size: 13px;">
+    <span>Low</span>
+    <span>High</span>
+  </div>
+</div>
+<script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoiaWFkYWFjYTkxNDExMyIsImEiOiJjbHRicWdsajAwNWNjMmxudHlsZ2hvbHlyIn0.1CUoJeD-i73AfzIevYu7WA';
+  var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/iadaaca914113/clvx1dqa1028101qv9jp034ms',
+    center: [103.8198, 1.3521],
+    zoom: 9.91
+  });
+
+  var layers = ['v1992', 'v1994', 'v1996', 'v1998', 'v2000', 'v2002', 'v2004', 'v2006', 'v2008', 'v2010', 'v2012', 'v2014', 'v2016', 'v2018', 'v2020']; // Array of layer IDs
+  var isAnimating = false; // Track whether the animation is running
+  var currentYear = 1992;
+  var interval;
+
+  map.on('load', function() {
+     map.addSource('n1992', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.994y3uwp'
+    });
+    map.addLayer({
+      id: 'v1992',
+      type: 'raster',
+      source: 'n1992',
+      'source-layer': 'n1992-1xg8x9',
+	  paint: {
+        'raster-opacity': 0.78 // Initially not visible
+      }
+    });
+	
+    map.addSource('n1994', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.1km1sdg1'
+    });
+	
+    map.addLayer({
+      id: 'v1994',
+      type: 'raster',
+      source: 'n1994',
+      'source-layer': 'n1994-3n9ulr',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+
+    map.addSource('n1996', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.9h319fqp'
+    });
+	
+    map.addLayer({
+      id: 'v1996',
+      type: 'raster',
+      source: 'n1996',
+      'source-layer': 'n1996-dyltif',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+
+    map.addSource('n1998', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.9wzijsom'
+    });
+	
+    map.addLayer({
+      id: 'v1998',
+      type: 'raster',
+      source: 'n1998',
+      'source-layer': 'n1998-cjibob',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+	
+    map.addSource('n2000', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.8tcqp2jm'
+    });
+	
+    map.addLayer({
+      id: 'v2000',
+      type: 'raster',
+      source: 'n2000',
+      'source-layer': 'n2000-ahjmwv',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+	
+    map.addSource('n2002', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.56qclleb'
+    });
+	
+    map.addLayer({
+      id: 'v2002',
+      type: 'raster',
+      source: 'n2002',
+      'source-layer': 'n2002-81426l',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+
+    map.addSource('n2004', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.cy7juw5c'
+    });
+	
+    map.addLayer({
+      id: 'v2004',
+      type: 'raster',
+      source: 'n2004',
+      'source-layer': 'n2004-9jx6dk',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+
+    map.addSource('n2006', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.1qpy9sb2'
+    });
+	
+    map.addLayer({
+      id: 'v2006',
+      type: 'raster',
+      source: 'n2006',
+      'source-layer': 'n2006-4u95tw',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+
+    map.addSource('n2008', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.ax806pug'
+    });
+	
+    map.addLayer({
+      id: 'v2008',
+      type: 'raster',
+      source: 'n2008',
+      'source-layer': 'n2008-1stp8l',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+
+    map.addSource('n2010', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.bor04p6h'
+    });
+	
+    map.addLayer({
+      id: 'v2010',
+      type: 'raster',
+      source: 'n2010',
+      'source-layer': 'n2010-90g12p',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+
+    map.addSource('n2012', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.b9fdtznl'
+    });
+	
+    map.addLayer({
+      id: 'v2012',
+      type: 'raster',
+      source: 'n2012',
+      'source-layer': 'n2012-1lib6w',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+	
+    map.addSource('n2014', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.3muchngt'
+    });
+	
+    map.addLayer({
+      id: 'v2014',
+      type: 'raster',
+      source: 'n2014',
+      'source-layer': 'n2014-cafifv',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+
+    map.addSource('n2016', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.5pl0nhhw'
+    });
+	
+    map.addLayer({
+      id: 'v2016',
+      type: 'raster',
+      source: 'n2016',
+      'source-layer': 'n2016-7pqp62',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+
+    map.addSource('n2018', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.0kdkql5u'
+    });
+	
+    map.addLayer({
+      id: 'v2018',
+      type: 'raster',
+      source: 'n2018',
+      'source-layer': 'n2018-digob8',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+
+    map.addSource('n2020', {
+      type: 'raster',
+      url: 'mapbox://iadaaca914113.26qdq85t'
+    });
+	
+    map.addLayer({
+      id: 'v2020',
+      type: 'raster',
+      source: 'n2020',
+      'source-layer': 'n2020-dtedoa',
+	  paint: {
+        'raster-opacity': 0 // Initially not visible
+      }
+    });
+  });
+
+  function updateYear(selectedYear) {
+    document.getElementById("year-display").innerHTML = selectedYear; // Update display
+    layers.forEach(function(layerId) {
+      var year = layerId.substring(1); // Extract year from layer ID
+      var opacity = (year === selectedYear) ? 0.78 : 0;
+      map.setPaintProperty(layerId, 'raster-opacity', opacity);
+    });
+  }
+
+  document.getElementById('animate-btn').addEventListener('click', function() {
+    if (!isAnimating) {
+      isAnimating = true;
+      interval = setInterval(() => {
+        updateYear(currentYear.toString());
+        document.getElementById('slider').value = currentYear;
+        if (currentYear >= 2020) {
+          clearInterval(interval);
+          isAnimating = false;
+          currentYear = 1992; // Reset to start or consider currentYear += 2; for next cycle without resetting
+        } else {
+          currentYear += 2;
+        }
+      }, 191);
+    } else {
+      clearInterval(interval);
+      isAnimating = false;
+    }
+  });
+
+  document.getElementById('slider').addEventListener('input', function() {
+    currentYear = parseInt(this.value); // Adjust current year based on slider input
+    updateYear(currentYear.toString());
+  });
+
+</script>
+</body>
+</html>

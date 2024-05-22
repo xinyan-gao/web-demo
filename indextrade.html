@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Import Trade Chart</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/@antv/l7plot@0.0.5/dist/l7plot.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    
+    
+<!--
+Introduce the mapbox plug-in to realize the route animation function
+    <script src="data/echarts-all-3.js" type="text/javascript"></script>
+    <script src="data/EchartsLayer.js" type="text/javascript"></script>
+    <script src="https://gw.alipayobjects.com/os/antfincdn/l7/2.0.1-rc.6/index.js"></script>
+    <script src='https://unpkg.com/@antv/l7'></script>
+-->
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Raleway', sans-serif;
+            font-size: 12px;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 20px;
+            line-height: 30px;
+        }
+
+        h2 {
+            font-size: 14px;
+            line-height: 20px;
+            margin-bottom: 10px;
+        }
+        
+        
+        h3 {
+            font-size: 10px;
+            line-height: 10px;
+        }
+
+        a {
+            text-decoration: none;
+            color: #2dc4b2;
+        }
+
+        #console {
+            position: absolute;
+            left: 0;    
+            bottom: 0;  
+            width: 20%;
+            margin: 10px;
+            padding: 10px 10px;
+            background-color: white;
+            opacity: 0.8;
+        }
+
+        .session {
+            margin-bottom: 20px;
+        }
+        
+        .story {
+            scrollbar-width: auto;
+            background-color: #F5F5F5;
+            border: 1px solid #DDDDDD;
+            border-radius: 4px 0 4px 0;
+            max-height: 260px;
+            margin-bottom: 20px;
+            overflow: scroll;
+            overflow-x: hidden;
+            padding: 5px 5px 5px;
+        }
+
+        .row {
+            height: 12px;
+            width: 100%;
+        }
+
+        .slider {
+            height: 12px;
+            width: 100%;
+            width: 100%;
+            outline: none;
+            opacity: 0.8;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+        
+        .slider:hover {
+            opacity: 1;
+        }
+
+        .colors {
+            background: linear-gradient(to right, #fff5f0, #fcbba1, #fb6a4a, #cb181d, #67000d, #420000);
+            margin-bottom: 5px;
+        }
+        
+        
+
+        .label {
+            width: 15%;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .mapboxgl-popup {
+            max-width: 400px;
+            font: 12px/20px 'Raleway', sans-serif;
+            background-color: white;
+            opacity: 0.8;
+        }
+        
+         .button {
+            text-align: center;
+            font: 10px;
+            background: #669EC4;
+            border-radius: 3px;
+            padding: 3px;
+            width: 90px;
+            min-height: 35px;
+        }
+        
+        .popup {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 250px;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+            opacity:0.8
+        }
+
+        .popup h2 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .popup ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .popup li {
+            margin-bottom: 5px;
+        }
+        
+
+    </style>
+
+</head>
+    
+<body>
+    
+    <div id="container"></div>
+    <div id="map"></div> 
+    <div id="console">
+        <div class="session">
+            <h2>Import Amount (to Singapore)</h2>
+            <h3>Unit: billion $</h3>
+            <div class="row colors"></div>
+            <div class="row labels">
+                <div class="label">0.5k</div>
+                <div class="label">1k</div>
+                <div class="label">4k</div>
+                <div class="label">8k</div>
+                <div class="label">20k</div>
+                <div class="label">50k </div>
+            </div>
+        </div>
+        
+        
+        
+        
+    <div class="session">
+            <h2>Year <label id="year">2005</label></h2>
+            <input id="slider" class="slider" type="range" min="2005" max="2022" step="1" value="2005" />
+    
+        <div class="session">
+            <h2>Animation (Press 'CTRL' to Zoom)</h2>
+            <div class="session">
+            <button id="animationButton" class="button" value="animation_off">&#x23F8;&#xFE0E;Pause</button>
+            <button id="flyButton" class="button">&#x2139;&#xFE0E; Global</button>
+            </div>
+        </div>
+    </div>
+         <p>
+            Data derived from:
+            <a href="https://www.singstat.gov.sg/publications/reference/singapore-in-figures/trade-and-investment">Singapore Department of Statistics</a>
+      </p>
+    </div>
+    
+     <div id="popup" class="popup">
+        <h2>Top 15 Importing Regions</h2>
+        <ul id="countryList"></ul>
+    </div> 
+    
+
+
+    
+
+     
+    
+    
+    <script>
+        
+        
+       
+        
+        // We are going to start from the year 2005 and switch the animation on
+        var year = 2005;
+        var animation = 'animation_on';
+
+        // Timer milliseconds between frames
+        const frameLength = 350;
+        // Global timer
+        var timer = null;
+
+        // Our dataset brings info from 1900 to 2017 for now
+        const yearMin = 2005;
+        const yearMax = 2022;
+
+        // agelanyi's mapbox token
+        mapboxgl.accessToken = 'pk.eyJ1IjoieW9uZ2xpYW8iLCJhIjoiY2xyN3I3MHJjMjN4MDJrbnZkdzVvMWFpdiJ9.16rKWG3qqBXzb2jMdg--NA';
+
+        // Our map and initial style definition
+        const map = new mapboxgl.Map({
+            container: 'map',
+            // Picking the mapbox light theme for now
+            style: 'mapbox://styles/yongliao/clvbb0l3p00uu01ocgi7v6baj',
+            center: [103.8198, 1.3521],
+            zoom: 1.9,
+            // Starting projection
+            projection: 'equirectangular' 
+        });
+        
+        //On load, all these things are going to happen...
+        map.on('load', () => {
+            
+            
+        map.dragRotate.disable();
+            
+             map.easeTo({
+        bearing: 0, //Set the map rotation angle to 0 to ensure that the map is in 2D mode.
+        duration: 0 //It can be set to 0, and the change can be applied immediately.
+    });
+            
+            //Disable the scrolling and scaling function of the map
+            map.scrollZoom.disable();
+
+            //Monitor the keyboard press event
+            document.addEventListener('keydown', (event) => {
+    //If the Ctrl key is pressed, the scrolling and scaling function of the map is enabled.
+                if (event.ctrlKey) {
+                    map.scrollZoom.enable();
+                }
+            });
+
+            // Monitor the keyboard lift event
+            document.addEventListener('keyup', () => {
+    // Disable the scrolling and scaling function of the map when the keyboard is raised.
+                map.scrollZoom.disable();
+            });
+            
+            
+            
+        let year = 2005; // Initial year
+        const initialDataFile = getDataFile();
+            
+            
+            fetch(initialDataFile)
+    .then(response => response.json())
+    .then(data => {
+        const top15Countries = getTop15Countries(data);
+        console.log("Loaded data:", data); // Check the loaded data
+        updatePopup(top15Countries);
+    })
+    .catch(error => console.error('Error fetching data:', error));
+
+                
+       // Read imports data        
+        map.addSource('importsdata', {
+            type: 'geojson',
+            data: getDataFile() //Make sure that this function returns a legitimate GeoJSON object.
+                });
+
+        map.addLayer({
+            id: 'importsdata',
+            type: 'fill',
+            source: 'importsdata',
+            layout: {},
+            paint: {
+                'fill-color': {
+                        property: 'imports', //Suppose imports is your GeoJSON attribute, which contains the temperature value of each region.
+                        stops: 
+   [
+      [0.5, '#fff5f0'],    // Very light red (almost white) for the lowest value
+      [500, '#fee0d2'],    // Light pink
+      [1000, '#fcbba1'],   // Soft red
+      [2000, '#fc9272'],   // Light coral
+      [4000, '#fb6a4a'],   // Bright red
+      [6000, '#ef3b2c'],   // Strong red
+      [8000, '#cb181d'],   // Darker red
+      [10000, '#a50f15'],   // Dark red
+      [12000, '#8b0000'],   // Darker red
+      [15000, '#7f0000'],   // Very dark red
+      [20000, '#67000d'],   // Near to the darkest red
+      [30000, '#540000'],  // Dark burgundy
+      [50000, '#420000'],  // Even darker burgundy
+      [70000, '#1a0000'],  // Darkest red for the highest value
+    
+]
+
+
+                    },
+                    'fill-opacity': 0.8
+                }
+            });
+            
+             
+            let popup; 
+            map.on('mouseenter', 'importsdata', (e) => {
+    // Changing the cursor style
+            map.getCanvas().style.cursor = 'pointer';
+
+    // Get the coordinates of the mouse event
+            const coordinates = e.lngLat;
+
+    // Extract the attribute information of geographical features
+            const year = e.features[0].properties.year;
+            const imports = e.features[0].properties.imports;
+            const location = e.features[0].properties.name;
+                
+    // Set the content of the pop-up box
+             const popupContent = `<strong>Import amount in ${year}</strong>
+                                    <p>Import value: <em>${imports} billion dollars</em><br/>
+                                    Location: <em>${location}</em></p>`;
+
+    // Create a pop-up box, set its location and content, and then add it to the map.
+            popup= new mapboxgl.Popup({
+                closeButton: false,    // Set closeButton to false, indicating that the close button is not displayed on the pop-up window.
+                closeOnClick: false    // Setting closeOnClick to false means that clicking on other parts of the map will not close the pop-up window.
+                })
+            .setLngLat(coordinates) // Set the position of the pop-up box to the coordinates of the mouse event.
+            .setHTML(popupContent)  // Set the content of the pop-up box
+            .addTo(map);
+            });
+
+            
+            // When leaving the marker, let's remove the popup
+            map.on('mouseleave', 'importsdata', () => {
+                map.getCanvas().style.cursor = '';
+            
+            if (popup) {
+                popup.remove();
+            }    
+            });
+            
+            // Add zoom and rotation controls to the map.
+            map.addControl(new mapboxgl.NavigationControl());
+            
+                
+           
+            // Update the dataset to the selected year when the slider is moved
+            document.getElementById('slider').addEventListener('input', (event) => {
+                year = parseInt(event.target.value);
+
+                console.log("Slider updated to year: " + year);
+
+                // Updating the map
+                //console.log("Fetching: " + getDataFile());
+                map.getSource('importsdata').setData(getDataFile());
+                
+            
+
+                // Updating the year element of the UI
+                document.getElementById('year').innerText = year;
+
+            });
+            
+            
+          
+            // Handling events of the Animation Button
+            document.getElementById('animationButton').addEventListener('click', function (event) {
+    // Get the current status of the button
+                animation = event.target.value;
+
+    // Perform the corresponding operation according to the button status.
+            if (animation == 'animation_on') {
+        // If the animation is started, stop it.
+            if (timer) {
+            window.clearInterval(timer);
+            timer = null;
+        }
+        // Update button text and values
+            document.getElementById('animationButton').innerText = "\u23F5\uFE0EPlay";
+            document.getElementById('animationButton').value = "animation_off";
+            } else if (animation == 'animation_off') {
+        // If the animation does not start, start it.
+            if (!timer) {
+            timer = setInterval(updateMap, frameLength);
+            window.setInterval(timer);
+        }
+        // Update button text and values
+            document.getElementById('animationButton').innerText = "\u23F8\uFE0EPause";
+            document.getElementById('animationButton').value = "animation_on";
+    }              
+        
+});
+                      
+            
+            // Preparing the Fly-in settings and storing intermediate coordinates
+            var idx = 0;
+            var center = [
+               [0.3476, 32.5825],
+               [103.8198, 1.3521]
+            ]
+            var zoom = [
+                1.2,
+                1.9
+            ]
+            var pitch = [
+                [0],
+                [0]
+            ]
+            
+            // Handling events of the Fly-in Button
+            document.getElementById('flyButton').addEventListener('click', function () {
+                // Updating the text on te button, adding unicode pictograms
+                if (idx % 2 == 0) {
+                    document.getElementById('flyButton').innerText = "\u2139\uFE0E SGP";
+                } else {
+                    document.getElementById('flyButton').innerText = "\u2139\uFE0E Global";
+
+                }
+                // Back to the first coordinate.
+                if (idx >= center.length) {
+                    idx = 0;
+                }
+                // Fly to the selected coordinates
+                map.flyTo({
+                    center: center[idx],
+                    zoom: zoom[idx],
+                    pitch: pitch[idx]
+                });
+                idx++;
+            });
+
+        });
+        
+           
+            // Temporary storage of the data in memory and the prefetched year number
+            let nextDataPayload = "";
+            let nextDataYear = 0;
+
+    
+       // Getting the data file string
+            function getDataFile() {
+            return `data/imports_${year}.geojson`;
+            }
+        
+        
+        
+        
+// Update the data of the line layer
+function updateLineLayer(country) {
+    const startPoint = [103.8198, 1.3521]; // Longitude and latitude of Singapore
+    const endPoint = [country.properties.longitude, country.properties.latitude]; // The latitude and longitude of the current country
+    const tradeAmount = country.properties.imports; // Amount of transactions
+
+    const line = {
+        type: 'Feature',
+        properties: {tradeAmount: tradeAmount},
+        geometry: {
+            type: 'LineString',
+            coordinates: [startPoint, endPoint]
+        }
+    };
+
+    const sourceId = `line-${country.properties.name}`;
+
+    // If the source exists, update the data.
+    if (map.getSource(sourceId)) {
+        map.getSource(sourceId).setData(line);
+    } else {
+        // If the source does not exist, create a new source and layer.
+        map.addSource(sourceId, {
+            type: 'geojson',
+            data: line
+        });
+
+        map.addLayer({
+            id: `line-layer-${country.properties.name}`,
+            type: 'line',
+            source: sourceId,
+            layout: {},
+            paint: {
+                'line-width': {
+                    property: 'tradeAmount',
+                    type: 'exponential',
+                    stops: [
+                        [1000, 0.1],
+                        [2000, 0.2],
+                        [3000, 0.4],
+                        [4000, 0.6],
+                        [5000, 1],
+                        [6000, 1.1],
+                        [7000, 1.2],
+                        [9000, 1.4],
+                        [10000, 2],
+                        [12000, 2.1],
+                        [15000, 2.4],
+                        [17000, 2.6],
+                        [20000, 3],
+                        [30000, 3.5],
+                        [40000, 4],
+                        [50000, 4.5],
+                        [70000, 6]
+                    ]
+                },
+                'line-color': '#ef3b2c',
+                'line-opacity': 0.8
+            }
+        });
+    }
+}
+
+        
+        // A function to prefetch data in an async manner (should speed things up a bit)
+            async function prefetchData(prefetchYear) {
+            let response = await fetch(`data/imports_${prefetchYear}.geojson`);
+            let data = await response.json();
+            nextDataPayload = data;
+            nextDataYear = prefetchYear;
+            console.log("[Prefetch] Received dataset for year " + nextDataYear);
+        }
+        
+            
+            function updateMap() {
+            if (year < yearMax + 1) {
+                // Update slider text and move the slider to the right location
+                document.getElementById('year').innerText = year;
+                document.getElementById('slider').value = year;
+                
+                map.getSource('importsdata').setData(getDataFile());
+                
+                //Redraw lines to reflect new data
+            fetch(getDataFile())
+            .then(response => response.json())
+            .then(data => {
+                const top15Countries = getTop15Countries(data);
+                top15Countries.forEach(country => {
+                    updateLineLayer(country);
+                });
+            })
+            .catch(error => console.error('Error fetching data:', error));
+                
+                
+                updatePopupForYear(year);
+                year++;
+                
+                } else {
+        //If the maximum year has been reached, stop the animation and return the map to its original position.
+                clearInterval(timer); // Stop animation
+                timer = null; // Set the timer to null
+                year = yearMin; 
+            }};
+        
+    
+        
+        
+        //The top 15 data
+             function getTop15Countries(data) {
+       // Assume that GeoJSON data contains "name" and "imports" attributes
+           const sortedCountries = data.features
+                .sort((a, b) => b.properties.imports - a.properties.imports)
+                .slice(0, 15);
+            
+            return sortedCountries
+                 
+        }
+        
+        
+        // Functions to update the content of the pop-up window
+            function updatePopup(data) {
+                const countryList = document.getElementById('countryList');
+                countryList.innerHTML = '';
+                data.forEach((country, index) => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${index + 1}. ${country.properties.name}: $${country.properties.imports} billion`;
+                    countryList.appendChild(listItem);
+                });
+            }
+        
+        // Functions to update the content of the table that pops up
+        function updatePopupForYear(year) {
+    const dataFile = `data/imports_${year}.geojson`;
+    fetch(dataFile)
+        .then(response => response.json())
+        .then(data => {
+            const top15Countries = getTop15Countries(data);
+            updatePopup(top15Countries);
+        })
+        .catch(error => console.error('Error fetching data:', error));
+}
+
+// Update the dataset to the selected year when the slider is moved
+document.getElementById('slider').addEventListener('input', (event) => {
+    year = parseInt(event.target.value);
+
+    console.log("Slider updated to year: " + year);
+
+    // Updating the map
+    map.getSource('importsdata').setData(getDataFile());
+
+    // Updating the year element of the UI
+    document.getElementById('year').innerText = year;
+
+    // Update popup table for the selected year
+    updatePopupForYear(year);
+});
+
+            
+        
+        
+        
+            let mapElement;
+        window.addEventListener("load", (event) => {
+            mapElement = document.querySelector("#map");
+            createObserver();
+        }, false);
+
+        // This function created the observer
+        function createObserver() {
+            let observer;
+
+            let options = {
+                root: null,
+                rootMargin: "0px",
+                threshold: [0.0, 0.1, 0.5, 0.9, 1.0] // A simple set of thresholds, perhaps a even too many of them
+            };
+
+            // Add the handler to the observer
+            observer = new IntersectionObserver(handleIntersect, options);
+            observer.observe(mapElement);
+        }
+        
+         function handleIntersect(entries, observer) {
+            entries.forEach((entry) => {
+                // console.log("[handleIntersect] on: " + entry.id + " intersectRatio: " + entry.intersectionRatio);
+
+                if (entry.intersectionRatio < 0.05) {
+                    console.log("map is not visible, stopping animation if needed, ratio: " + entry.intersectionRatio);
+                    // If animation is off, we do not need to do anything
+                    if (animation == 'animation_on') {
+                        // Just removing the timer and stopping animation temporarily,
+                        // Once the window is re-focused, we can start it
+                        if (timer) {
+                            window.clearInterval(timer);
+                            timer = null;
+                        }
+                    }
+                } else {
+                    console.log("map is visible, enabling animation if needed, ratio: " + entry.intersectionRatio);
+                    // If animation is off, we do not need to do anything
+                    if (animation == 'animation_on') {
+                        // Again, not changing tha animation global setting,
+                        // just enabling animations again as we have gained focus and visibility
+                        if (!timer) {
+                            timer = setInterval(updateMap, frameLength);
+                            window.setInterval(timer);
+                        }
+                    }          
+                }
+            });
+        }
+
+        
+              
+    
+</script>
+
+</body>
+</html>
+
